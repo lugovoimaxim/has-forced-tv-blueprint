@@ -1,0 +1,58 @@
+blueprint:
+  name: TV Wake on LAN (forced)
+  description: >
+    Turns on a TV using Wake-on-LAN when it's been off for a specified duration 
+    during working hours on weekdays.
+  domain: automation
+  input:
+    tv_entity:
+      name: TV media player
+      description: The TV entity to monitor (must support 'off' state)
+      selector:
+        entity:
+          domain: media_player
+    mac_address:
+      name: MAC Address
+      description: MAC address to send WOL packet to
+      selector:
+        text:
+    broadcast_address:
+      name: Broadcast Address
+      description: IP broadcast address (e.g. 10.2.15.107)
+      selector:
+        text:
+    delay_seconds:
+      name: Off duration before waking up (seconds)
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 300
+          unit_of_measurement: seconds
+
+trigger:
+  - platform: state
+    entity_id: !input tv_entity
+    to: "off"
+    for:
+      seconds: !input delay_seconds
+
+condition:
+  - condition: time
+    after: "10:00:00"
+    before: "19:00:00"
+    weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+
+action:
+  - service: wake_on_lan.send_magic_packet
+    data:
+      mac: !input mac_address
+      broadcast_address: !input broadcast_address
+      broadcast_port: 9
+
+mode: single
