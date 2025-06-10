@@ -1,24 +1,26 @@
 blueprint:
   name: TV Samsung Turn On (forced)
   description: >
-    Надёжное включение Samsung TV через remote.send_command с командой Power 
-    после определённого времени нахождения в состоянии off, только по будням и в рабочее время.
+    Включает телевизор Samsung с помощью remote.turn_on несколько раз 
+    после нахождения в состоянии off в течение указанного времени.
+    Работает по будням в рабочее время.
+
   domain: automation
   input:
     tv_entity:
       name: TV media player
-      description: The TV media_player entity to monitor (must support 'off' state)
+      description: Медиа-сущность телевизора (например, media_player.samsung_tv)
       selector:
         entity:
           domain: media_player
     remote_entity:
-      name: Samsung Remote entity
-      description: The remote entity (e.g., remote.samsung_tv)
+      name: Remote entity
+      description: Remote-сущность (например, remote.samsung_tv)
       selector:
         entity:
           domain: remote
     delay_seconds:
-      name: Off duration before triggering (seconds)
+      name: Off duration before attempting turn on (seconds)
       default: 15
       selector:
         number:
@@ -26,18 +28,18 @@ blueprint:
           max: 300
           unit_of_measurement: seconds
     repeat_count:
-      name: Number of Power commands
+      name: Number of turn on attempts
       default: 3
       selector:
         number:
-          min: 1
+          min: 2
           max: 5
     repeat_delay:
-      name: Delay between repeats (in seconds)
-      default: 2
+      name: Delay between attempts (seconds)
+      default: 5
       selector:
         number:
-          min: 1
+          min: 3
           max: 10
           unit_of_measurement: seconds
 
@@ -63,11 +65,9 @@ action:
   - repeat:
       count: !input repeat_count
       sequence:
-        - service: remote.send_command
+        - service: remote.turn_on
           target:
             entity_id: !input remote_entity
-          data:
-            command: "Power"
         - delay:
             seconds: !input repeat_delay
 
