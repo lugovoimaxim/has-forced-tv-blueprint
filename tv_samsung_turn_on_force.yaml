@@ -1,0 +1,74 @@
+blueprint:
+  name: TV Samsung Turn On (forced)
+  description: >
+    Надёжное включение Samsung TV через remote.send_command с командой Power 
+    после определённого времени нахождения в состоянии off, только по будням и в рабочее время.
+  domain: automation
+  input:
+    tv_entity:
+      name: TV media player
+      description: The TV media_player entity to monitor (must support 'off' state)
+      selector:
+        entity:
+          domain: media_player
+    remote_entity:
+      name: Samsung Remote entity
+      description: The remote entity (e.g., remote.samsung_tv)
+      selector:
+        entity:
+          domain: remote
+    delay_seconds:
+      name: Off duration before triggering (seconds)
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 300
+          unit_of_measurement: seconds
+    repeat_count:
+      name: Number of Power commands
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 5
+    repeat_delay:
+      name: Delay between repeats (in seconds)
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 10
+          unit_of_measurement: seconds
+
+trigger:
+  - platform: state
+    entity_id: !input tv_entity
+    to: "off"
+    for:
+      seconds: !input delay_seconds
+
+condition:
+  - condition: time
+    after: "10:00:00"
+    before: "19:00:00"
+    weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+
+action:
+  - repeat:
+      count: !input repeat_count
+      sequence:
+        - service: remote.send_command
+          target:
+            entity_id: !input remote_entity
+          data:
+            command: "Power"
+        - delay:
+            seconds: !input repeat_delay
+
+mode: single
