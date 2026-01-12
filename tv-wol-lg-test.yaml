@@ -70,15 +70,18 @@ condition:
       - fri
 
 action:
+  # Прокидываем input в переменную, чтобы использовать в Jinja
+  - variables:
+      tv: !input tv_entity
+
   # Ждём заданное время ПОСЛЕ факта выключения
   - delay:
       seconds: !input delay_seconds
 
-  # Если ТВ всё ещё off ИЛИ уже стал unavailable (что у тебя и происходит),
-  # тогда пробуем "разбудить" через WOL
+  # Если ТВ всё ещё off ИЛИ уже стал unavailable — будим
   - condition: template
     value_template: >
-      {{ states(!input tv_entity) in ['off', 'unavailable'] }}
+      {{ states(tv) in ['off', 'unavailable'] }}
 
   - repeat:
       count: !input repeat_count
