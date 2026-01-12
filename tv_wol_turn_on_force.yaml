@@ -29,6 +29,21 @@ blueprint:
           min: 1
           max: 300
           unit_of_measurement: seconds
+    repeat_count:
+      name: Number of turn on attempts
+      default: 3
+      selector:
+        number:
+          min: 2
+          max: 5
+    repeat_delay:
+      name: Delay between attempts (seconds)
+      default: 5
+      selector:
+        number:
+          min: 3
+          max: 10
+          unit_of_measurement: seconds
 
 trigger:
   - platform: state
