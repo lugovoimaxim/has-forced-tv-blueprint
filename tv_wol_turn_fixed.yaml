@@ -1,5 +1,5 @@
 blueprint:
-  name: TV Wake on LAN (forced) - fixed
+  name: TV Wake on LAN (forced) - using
   description: >
     Turns on a TV using Wake-on-LAN when it turns off, then waits a bit and
     wakes it if it is still off or became unavailable, during working hours on weekdays.
