@@ -1,0 +1,95 @@
+blueprint:
+  name: TV Wake on LAN (forced) - fixed
+  description: >
+    Turns on a TV using Wake-on-LAN when it turns off, then waits a bit and
+    wakes it if it is still off or became unavailable, during working hours on weekdays.
+  domain: automation
+
+  input:
+    tv_entity:
+      name: TV media player
+      description: The TV entity to monitor (must support 'off' state)
+      selector:
+        entity:
+          domain: media_player
+
+    mac_address:
+      name: MAC Address
+      description: MAC address to send WOL packet to
+      selector:
+        text:
+
+    broadcast_address:
+      name: Broadcast Address
+      description: IP broadcast address (e.g. 10.2.15.255)
+      selector:
+        text:
+
+    delay_seconds:
+      name: Off duration before waking up (seconds)
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 300
+          unit_of_measurement: seconds
+
+    repeat_count:
+      name: Number of turn on attempts
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 10
+
+    repeat_delay:
+      name: Delay between attempts (seconds)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: seconds
+
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: !input tv_entity
+    to: "off"
+
+condition:
+  - condition: time
+    after: "10:00:00"
+    before: "20:00:00"
+    weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+
+action:
+  # Прокидываем input в переменную, чтобы использовать в Jinja
+  - variables:
+      tv: !input tv_entity
+
+  # Ждём заданное время ПОСЛЕ факта выключения
+  - delay:
+      seconds: !input delay_seconds
+
+  # Если ТВ всё ещё off ИЛИ уже стал unavailable — будим
+  - condition: template
+    value_template: >
+      {{ states(tv) in ['off', 'unavailable'] }}
+
+  - repeat:
+      count: !input repeat_count
+      sequence:
+        - service: wake_on_lan.send_magic_packet
+          data:
+            mac: !input mac_address
+            broadcast_address: !input broadcast_address
+            broadcast_port: 9
+        - delay:
+            seconds: !input repeat_delay
